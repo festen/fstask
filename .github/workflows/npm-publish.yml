@@ -19,8 +19,26 @@ jobs:
       - run: npm ci
       - run: npm run test:ci
 
-  publish-npm:
-    needs: test
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+      - name: Archive dist/
+        uses: actions/upload-artifact@v2
+        with:
+          name: dist
+          path: dist
+
+  publish:
+    needs:
+      - test
+      - build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -29,8 +47,10 @@ jobs:
           node-version: 16
           registry-url: https://registry.npmjs.org/
           cache: 'npm'
-      - run: npm ci
-      - run: npm run build
+      - name: Download dist/
+        uses: actions/download-artifact@v2
+        with:
+          name: dist
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
