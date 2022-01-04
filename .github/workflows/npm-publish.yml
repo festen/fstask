@@ -65,39 +65,12 @@ jobs:
       - run: npm ci
       - run: npm run lint
 
-
-  bump-version:
-    name: Bump version
+  publish:
+    name: Publish package
     needs:
       - lint
       - test
       - build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-        with:
-          node-version: 16
-      - run: node -pe "process.stdout.write('Current package.json version '); require('./package.json').version"
-      - uses: phips28/gh-action-bump-version@v9.0.13
-        with:
-          major-wording: 'release:'
-          minor-wording: 'feat:'
-          patch-wording: 'fix:,chore:'
-          skip-tag: 'true'
-          commit-message: 'ci: bumps version to {{version}}'
-      - run: node -pe "process.stdout.write('Current package.json version '); require('./package.json').version"
-      - name: Archive package.json
-        uses: actions/upload-artifact@v2
-        with:
-          name: packagejson
-          path: package.json
-          retention-days: 1
-
-  publish:
-    name: Publish to npm
-    needs:
-      - bump-version
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -109,10 +82,15 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: dist
-      - name: Download package.json
-        uses: actions/download-artifact@v2
+      - run: node -pe "process.stdout.write('Current package.json version '); require('./package.json').version"
+      - uses: phips28/gh-action-bump-version@v9.0.13
         with:
-          name: packagejson
+          major-wording: 'release:'
+          minor-wording: 'feat:'
+          patch-wording: 'fix:,chore:'
+          skip-tag: 'true'
+          commit-message: 'ci: bumps version to {{version}}'
+      - run: node -pe "process.stdout.write('Current package.json version '); require('./package.json').version"
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
