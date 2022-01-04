@@ -8,7 +8,17 @@ on:
     branches: [ master ]
 
 jobs:
+
+  prepare:
+    name: Check CI
+    runs-on: ubuntu-latest
+    if: "! startsWith(github.event.head_commit.message, 'ci:')"
+    steps:
+      - run: echo "${{ github.event.head_commit.message }}"
+
   test:
+    name: Unit test
+    needs: [ prepare ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -20,6 +30,8 @@ jobs:
       - run: npm run test:ci
 
   build:
+    name: Build package
+    needs: [ prepare ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -51,12 +63,12 @@ jobs:
       - uses: phips28/gh-action-bump-version@master
         with:
           major-wording: 'release:'
-          minor-wording: 'feat:,feature:,'
+          minor-wording: 'feat:,feature:'
           patch-wording: 'fix:,chore:'
           skip-tag: 'true'
           commit-message: 'ci: bumps version to {{version}} [skip ci]'
       - run: node -pe "process.stdout.write('Current package.json version '); require('./package.json').version"
-          
+
   publish:
     needs:
       - bump-version
