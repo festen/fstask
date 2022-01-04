@@ -34,8 +34,10 @@ jobs:
         with:
           name: dist
           path: dist
+          retention-days: 1
 
-  publish:
+  bump-version:
+    name: 'Bump version'
     needs:
       - test
       - build
@@ -45,8 +47,26 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: 16
+      - run: node -pe "process.stdout.write('Current package.json version '); require('./package.json').version"
+      - uses: phips28/gh-action-bump-version@master
+        with:
+          major-wording: 'release:'
+          minor-wording: 'feat:,feature:,'
+          patch-wording: 'fix:,chore:'
+          skip-tag: 'true'
+          commit-message: 'ci: bumps version to {{version}} [skip ci]'
+      - run: node -pe "process.stdout.write('Current package.json version '); require('./package.json').version"
+          
+  publish:
+    needs:
+      - bump-version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
           registry-url: https://registry.npmjs.org/
-          cache: 'npm'
       - name: Download dist/
         uses: actions/download-artifact@v2
         with:
