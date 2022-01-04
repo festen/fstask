@@ -103,19 +103,17 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: dist
-          path: dist
+          path: |
+            dist/
+            package.json
           retention-days: 1
 
   publish:
     name: Publish package
     needs:
       - build
-      - bump
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ needs.bump.outputs.nextVersion }}
       - uses: actions/setup-node@v2
         with:
           node-version: 16
@@ -132,5 +130,5 @@ jobs:
         with:
           name: npm-package
           path: |
-            '**/**'
+            '**/*'
             '!node_modules'
