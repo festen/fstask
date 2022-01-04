@@ -48,7 +48,7 @@ jobs:
       - name: Archive dist/
         uses: actions/upload-artifact@v2
         with:
-          name: dist
+          name: dist-build
           path: dist
           retention-days: 1
 
@@ -72,8 +72,15 @@ jobs:
           skip-tag: 'true'
           commit-message: 'ci: bumps version to {{version}}'
       - run: node -pe "process.stdout.write('Current package.json version '); require('./package.json').version"
+      - name: Archive package.json
+        uses: actions/upload-artifact@v2
+        with:
+          name: packagejson
+          path: package.json
+          retention-days: 1
 
   publish:
+    name: Publish to npm
     needs:
       - bump-version
     runs-on: ubuntu-latest
@@ -87,6 +94,10 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: dist
+      - name: Download package.json
+        uses: actions/download-artifact@v2
+        with:
+          name: packagejson
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
