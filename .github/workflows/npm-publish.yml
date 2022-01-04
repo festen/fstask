@@ -20,19 +20,6 @@ jobs:
     steps:
       - run: echo "${{ github.event.head_commit.message }}"
 
-  test:
-    name: Unit test
-    needs: [ prepare ]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-        with:
-          node-version: 16
-          cache: npm
-      - run: npm ci
-      - run: npm run test:ci
-
   build:
     name: Build package
     needs: [ prepare ]
@@ -48,13 +35,41 @@ jobs:
       - name: Archive dist/
         uses: actions/upload-artifact@v2
         with:
-          name: dist-build
+          name: dist
           path: dist
           retention-days: 1
+
+  test:
+    name: Unit test
+    needs: [ prepare ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+          cache: npm
+      - run: npm ci
+      - run: npm run test:ci
+
+  lint:
+    name: Lint source
+    needs: [ prepare ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
 
   bump-version:
     name: Bump version
     needs:
+      - lint
       - test
       - build
     runs-on: ubuntu-latest
