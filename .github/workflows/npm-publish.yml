@@ -8,7 +8,7 @@ on:
     branches: [ master ]
 
 concurrency:
-  group: ${{ github.head_ref }}
+  group: master
   cancel-in-progress: true
 
 jobs:
