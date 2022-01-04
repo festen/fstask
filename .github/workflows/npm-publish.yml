@@ -20,8 +20,8 @@ jobs:
     steps:
       - run: echo "${{ github.event.head_commit.message }}"
 
-  build:
-    name: Build package
+  typecheck:
+    name: Check types
     needs: [ prepare ]
     runs-on: ubuntu-latest
     steps:
@@ -31,13 +31,7 @@ jobs:
           node-version: 16
           cache: npm
       - run: npm ci
-      - run: npm run build
-      - name: Archive dist/
-        uses: actions/upload-artifact@v2
-        with:
-          name: dist
-          path: dist
-          retention-days: 1
+      - run: npm run typecheck
 
   test:
     name: Unit test
@@ -65,32 +59,78 @@ jobs:
       - run: npm ci
       - run: npm run lint
 
-  publish:
-    name: Publish package
+  bump:
+    name: Bump version
     needs:
       - lint
       - test
       - build
     runs-on: ubuntu-latest
+    outputs:
+      previousVersion: ${{ steps.previousVersion.outputs.version }}
+      nextVersion: ${{ steps.nextVersion.outputs.version }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
           node-version: 16
-          registry-url: https://registry.npmjs.org/
-      - name: Download dist/
-        uses: actions/download-artifact@v2
-        with:
-          name: dist
-      - run: node -pe "process.stdout.write('Current package.json version '); require('./package.json').version"
+      - run: node -pe "process.stdout.write('::set-output name=version::'); require('./package.json').version"
+        id: 'previousVersion'
       - uses: phips28/gh-action-bump-version@v9.0.13
         with:
           major-wording: 'release:'
           minor-wording: 'feat:'
           patch-wording: 'fix:,chore:'
-          skip-tag: 'true'
           commit-message: 'ci: bumps version to {{version}}'
-      - run: node -pe "process.stdout.write('Current package.json version '); require('./package.json').version"
+      - run: node -pe "process.stdout.write('::set-output name=version::'); require('./package.json').version"
+        id: 'nextVersion'
+
+  build:
+    name: Build package
+    needs: [ bump ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ needs.bump.outputs.nextVersion }}
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Archive dist/
+        uses: actions/upload-artifact@v2
+        with:
+          name: dist
+          path: dist
+          retention-days: 1
+
+  publish:
+    name: Publish package
+    needs:
+      - build
+      - bump
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ needs.bump.outputs.nextVersion }}
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+          registry-url: https://registry.npmjs.org/
+      - uses: actions/download-artifact@v2
+        name: Download dist/
+        with:
+          name: dist
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+      - name: Archive pacakge
+        uses: actions/upload-artifact@v2
+        with:
+          name: npm-package
+          path: |
+            '**/**'
+            '!node_modules'

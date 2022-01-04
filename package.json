@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "rm -rf dist; tsc",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "start": "ts-node src/index.ts",
     "test": "jest --silent",
