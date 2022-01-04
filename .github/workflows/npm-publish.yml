@@ -1,7 +1,7 @@
 # This workflow will run tests using node and then publish a package to GitHub Packages when a release is created
 # For more information see: https://help.github.com/actions/language-and-framework-guides/publishing-nodejs-packages
 
-name: fstask package
+name: Deploy
 
 on:
   push:
@@ -29,7 +29,7 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: 16
-          cache: 'npm'
+          cache: npm
       - run: npm ci
       - run: npm run test:ci
 
@@ -42,7 +42,7 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: 16
-          cache: 'npm'
+          cache: npm
       - run: npm ci
       - run: npm run build
       - name: Archive dist/
@@ -53,7 +53,7 @@ jobs:
           retention-days: 1
 
   bump-version:
-    name: 'Bump version'
+    name: Bump version
     needs:
       - test
       - build
@@ -64,13 +64,13 @@ jobs:
         with:
           node-version: 16
       - run: node -pe "process.stdout.write('Current package.json version '); require('./package.json').version"
-      - uses: phips28/gh-action-bump-version@master
+      - uses: phips28/gh-action-bump-version@v9.0.13
         with:
           major-wording: 'release:'
           minor-wording: 'feat:,feature:'
           patch-wording: 'fix:,chore:'
           skip-tag: 'true'
-          commit-message: 'ci: bumps version to {{version}} [skip ci]'
+          commit-message: 'ci: bumps version to {{version}}'
       - run: node -pe "process.stdout.write('Current package.json version '); require('./package.json').version"
 
   publish:

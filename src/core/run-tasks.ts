@@ -1,6 +1,6 @@
 import { $, chalk, sleep } from 'zx'
 import { Task } from './task'
-import { sudoStart, sudoStop } from '../support'
+import { SetOutput, sudoStart, sudoStop } from '../support'
 import tasuku from 'tasuku'
 
 interface Options {
@@ -24,7 +24,10 @@ const defaultOptions: Options = {
   preAuthSudo: false,
 }
 
-export const runTasks = async (steps: Step[], options: Partial<Options>) => {
+export const runTasks = async (
+  steps: Step[],
+  options: Partial<Options>,
+): Promise<void> => {
   const { debug, concurrency, interactive, rollback, preAuthSudo } = {
     ...defaultOptions,
     ...options,
@@ -33,7 +36,7 @@ export const runTasks = async (steps: Step[], options: Partial<Options>) => {
   $.shell = '/bin/zsh'
   $.verbose = debug
 
-  const command = (task: Task) =>
+  const command = (task: Task): ((setOutput: SetOutput) => Promise<void>) =>
     rollback ? task.rollback.bind(task) : task.run.bind(task)
 
   if (interactive) {
@@ -46,8 +49,9 @@ export const runTasks = async (steps: Step[], options: Partial<Options>) => {
 
   if (debug) {
     for (const step of steps) {
-      if (steps.length > 1)
+      if (steps.length > 1) {
         process.stdout.write(chalk.blue(chalk.bold(`==> ${step.name}`)))
+      }
       for (const task of step.tasks) {
         process.stdout.write(chalk.bold(task.title))
         await command(task)((txt) => process.stdout.write(txt))
@@ -57,8 +61,9 @@ export const runTasks = async (steps: Step[], options: Partial<Options>) => {
   }
 
   for (const step of steps) {
-    if (steps.length > 1)
+    if (steps.length > 1) {
       process.stdout.write(chalk.blue(chalk.bold(`==> ${step.name}`)))
+    }
     await tasuku.group(
       (createTasks: any) =>
         step.tasks.map((task) => {
@@ -73,10 +78,10 @@ export const runTasks = async (steps: Step[], options: Partial<Options>) => {
               await command(task)(setOutput)
               await sleep(300)
               setOutput('')
-            }
+            },
           )
         }),
-      { concurrency }
+      { concurrency },
     )
   }
 

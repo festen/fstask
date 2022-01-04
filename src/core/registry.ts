@@ -2,7 +2,7 @@ import { Task } from './task'
 import { ExecuteFn } from '../support'
 import { chalk } from 'zx'
 
-export type RegisterTaskOptions<T> = {
+export interface RegisterTaskOptions<T> {
   title: string
   run?: ExecuteFn<T>
   rollback?: ExecuteFn<void>
@@ -12,8 +12,8 @@ export type RegisterTaskOptions<T> = {
 export class Registry {
   #tasks: Task[] = []
 
-  getAll(): Task[] {
-    const unresolvedDependencies: Array<{ task: string; deps: string[] }> =
+  getAll (): Task[] {
+    const unresolvedDependencies: Array<{ task: string, deps: string[] }> =
       Object.entries(this.forwardRefCache)
         .map(([task, { deps }]) => ({
           task,
@@ -21,13 +21,14 @@ export class Registry {
         }))
         .filter(({ deps }) => deps.length > 0)
     if (unresolvedDependencies.length > 0) {
+      // noinspection TypeScriptValidateJSTypes
       const msg = unresolvedDependencies
         .map(({ task, deps }) => ({
           task: chalk.bold(task),
           deps: deps.map((d) => chalk.bold(d)).join(','),
         }))
         .map(
-          ({ task, deps }) => `Task ${task} has unresolved dependencies ${deps}`
+          ({ task, deps }) => `Task ${task} has unresolved dependencies ${deps}`,
         )
         .join('\n')
       console.error(msg)
@@ -42,21 +43,21 @@ export class Registry {
     this.#tasks.push(task)
   }
 
-  clear(): void {
+  clear (): void {
     this.#tasks = []
     this.forwardRefCache = {}
   }
 
-  resolve(task: string): Task | undefined {
+  resolve (task: string): Task | undefined {
     return this.#tasks.find((t) => t.title === task)
   }
 
-  private forwardRefCache: Record<string, { task: Task; deps: string[] }> = {}
+  private forwardRefCache: Record<string, { task: Task, deps: string[] }> = {}
 
-  private resolveDependencies() {
+  private resolveDependencies (): void {
     for (const { task, deps } of Object.values(this.forwardRefCache)) {
       for (const dep of deps) {
-        if (this.forwardRefCache[dep]) {
+        if (this.forwardRefCache[dep] !== undefined) {
           this.forwardRefCache[task.title].deps = this.forwardRefCache[
             task.title
           ].deps.filter((d) => d !== dep)
@@ -66,8 +67,8 @@ export class Registry {
     }
   }
 
-  private updateCache(task: Task, forwardDependencies: string[]) {
-    if (this.forwardRefCache[task.title]) {
+  private updateCache (task: Task, forwardDependencies: string[]): void {
+    if (this.forwardRefCache[task.title] !== undefined) {
       throw new Error(`Task with title ${task.title} was already registered`)
     }
     this.forwardRefCache[task.title] = { task, deps: forwardDependencies }
@@ -75,7 +76,7 @@ export class Registry {
   }
 
   private static ensureTask<T>(
-    options: RegisterTaskOptions<T> | Task
+    options: RegisterTaskOptions<T> | Task,
   ): [Task, string[]] {
     if (options instanceof Task) return [options, []]
     const optionsDependencies = options.dependencies ?? []

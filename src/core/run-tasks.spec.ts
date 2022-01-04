@@ -11,7 +11,7 @@ describe('execute tasks', () => {
   test('it should store result of executed tasks', async () => {
     registry.register({
       title: 'testTask',
-      run: () => Promise.resolve('TEST_RESULT'),
+      run: async (): Promise<string> => 'TEST_RESULT',
     })
 
     await runTasks([{ name: 'default', tasks: registry.getAll() }], {

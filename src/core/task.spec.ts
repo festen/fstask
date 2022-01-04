@@ -13,7 +13,7 @@ describe('task', () => {
     })
 
     test('it should use function provided', async () => {
-      const fn = () => Promise.resolve('TEST_EXECUTE')
+      const fn = async (): Promise<string> => 'TEST_EXECUTE'
       const task = new Task({ title: 'Test', run: fn })
 
       expect(await task.run(() => {})).toBe('TEST_EXECUTE')
@@ -50,7 +50,7 @@ describe('task', () => {
       tasks[0].dependencies = [tasks[1]]
       tasks[1].dependencies = [tasks[0]]
 
-      const sortTasks = () => Task.sort(tasks)
+      const sortTasks = (): Task[] => Task.sort(tasks)
 
       expect(sortTasks).toThrow('Max depth reached while sorting')
     })

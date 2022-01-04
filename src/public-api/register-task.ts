@@ -6,5 +6,5 @@ type RegisterTaskOptions<T> = CoreRegisterTaskOptions<T> & {
   stepName?: string
 }
 
-export const registerTask = <T>(opts: RegisterTaskOptions<T>) =>
+export const registerTask = <T>(opts: RegisterTaskOptions<T>): void =>
   getStep(opts.order, opts.stepName).register(opts)

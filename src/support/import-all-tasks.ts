@@ -1,4 +1,8 @@
-export const importAllTasks = async () => {
+import { glob, path } from 'zx'
+
+export const importAllTasks = async (): Promise<void> => {
   const taskFiles = await glob(path.join(__dirname, '../tasks/*.task.ts'))
-  taskFiles.forEach((taskFile) => import(taskFile))
+  await Promise.allSettled(
+    taskFiles.map(async (taskFile): Promise<any> => await import(taskFile)),
+  )
 }
