@@ -67,7 +67,7 @@ jobs:
       - uses: phips28/gh-action-bump-version@v9.0.13
         with:
           major-wording: 'release:'
-          minor-wording: 'feat:,feature:'
+          minor-wording: 'feat:'
           patch-wording: 'fix:,chore:'
           skip-tag: 'true'
           commit-message: 'ci: bumps version to {{version}}'
