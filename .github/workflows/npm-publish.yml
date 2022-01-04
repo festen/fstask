@@ -62,9 +62,9 @@ jobs:
   bump:
     name: Bump version
     needs:
-      - lint
+      - typecheck
       - test
-      - build
+      - lint
     runs-on: ubuntu-latest
     outputs:
       previousVersion: ${{ steps.previousVersion.outputs.version }}
