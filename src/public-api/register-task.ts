@@ -1,10 +1,10 @@
 import { RegisterTaskOptions as CoreRegisterTaskOptions } from '../core'
-import { getStep } from './step'
+import { defaultRegistry } from './default-registry'
 
 type RegisterTaskOptions<T> = CoreRegisterTaskOptions<T> & {
-  order?: number
-  stepName?: string
+  step?: number
 }
 
-export const registerTask = <T>(opts: RegisterTaskOptions<T>): void =>
-  getStep(opts.order, opts.stepName).register(opts)
+export const registerTask = <T>(opts: RegisterTaskOptions<T>): void => {
+  defaultRegistry.getStepByOrder(opts.step ?? 0).registry.register(opts)
+}

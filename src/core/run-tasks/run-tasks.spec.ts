@@ -14,7 +14,7 @@ describe('execute tasks', () => {
       run: async (): Promise<string> => 'TEST_RESULT',
     })
 
-    await runTasks([{ name: 'default', tasks: registry.getAll() }], {
+    await runTasks([{ name: 'default', order: 0, registry }], {
       concurrency: 1,
       isDebug: true,
     })

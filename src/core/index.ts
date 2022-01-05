@@ -1,3 +1,5 @@
 export * from './registry'
 export * from './task'
 export * from './run-tasks'
+export * from './step'
+export * from './step-registry'

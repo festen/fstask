@@ -1,7 +1,7 @@
-import { Step } from './step'
 import { prompt } from 'inquirer'
-import { Task } from '../task'
 import { chalk } from 'zx'
+import { Task } from '../task'
+import { Runnable } from './runnable'
 
 const hydrate = (titles: string[], allTasks: Task[]): Task[] =>
   titles
@@ -33,16 +33,20 @@ const withRelated = (selectedTasks: Task[]): Task[] => {
 //   [],
 // )
 
-export async function showInteractivePrompt (steps: Step[]): Promise<Step[]> {
-  const allTasks = steps.flatMap((s) => s.tasks)
+export async function showInteractivePrompt (
+  runnables: Runnable[],
+): Promise<Runnable[]> {
+  const allTasks = runnables.flatMap((s) => s.tasks)
 
   const { selectedTitles } = await prompt<{ selectedTitles: string[] }>({
     type: 'checkbox',
     name: 'selectedTitles',
     message: 'Please select tasks to run',
-    choices: steps.flatMap((s) =>
-      allTasks.map((t) => ({ type: 'choice', name: t.title, checked: true })),
-    ),
+    choices: allTasks.map((t) => ({
+      type: 'choice',
+      name: t.title,
+      checked: true,
+    })),
   })
   const selectedTasks: Task[] = hydrate(selectedTitles, allTasks)
   const relatedTasks = withRelated(selectedTasks)
@@ -62,8 +66,8 @@ export async function showInteractivePrompt (steps: Step[]): Promise<Step[]> {
     name: 'confirmation',
     message: 'Run selected tasks?',
   })
-  if (!confirmation) await showInteractivePrompt(steps)
-  return steps
+  if (!confirmation) await showInteractivePrompt(runnables)
+  return runnables
     .map(({ name, tasks }) => ({
       name,
       tasks: tasks.filter((t) => relatedTasks.includes(t)),

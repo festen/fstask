@@ -1,10 +1,11 @@
 import { $ } from 'zx'
 import { Task } from '../task'
 import { SetOutput, withContext } from '../../support'
-import { Step } from './step'
 import { showInteractivePrompt } from './show-interactive-prompt'
 import { debugModeRun } from './debug-mode-run'
 import { normalModeRun } from './normal-mode-run'
+import { Step } from '../step'
+import { Runnable } from './runnable'
 
 interface Options {
   concurrency: number
@@ -25,7 +26,13 @@ const defaultOptions: Options = {
 type SetOutputFn = (setOutput: SetOutput) => Promise<void>
 
 const shouldAuth = (steps: Step[]): boolean =>
-  steps.flatMap((s) => s.tasks).some((t) => t.preAuthSudo)
+  steps.flatMap((s) => s.registry.getAll()).some((t) => t.preAuthSudo)
+
+const asRunnable = (steps: Step[]): Runnable[] =>
+  steps.map((step) => ({
+    name: step.name,
+    tasks: step.registry.getAll(),
+  }))
 
 export const runTasks = async (
   steps: Step[],
@@ -33,18 +40,21 @@ export const runTasks = async (
 ): Promise<void> => {
   const { isDebug, isInteractive, useGlobalSudo, mode, concurrency } = {
     ...defaultOptions,
-    ...options,
+    ...Object.fromEntries(
+      Object.entries(options).filter(([, v]) => v !== undefined),
+    ),
   }
 
   $.shell = '/bin/zsh'
   $.verbose = isDebug
 
+  let runnables = asRunnable(steps)
   const useSudo = useGlobalSudo || shouldAuth(steps)
   const getExecutable = (t: Task): SetOutputFn => t[mode].bind(t)
-  if (isInteractive) steps = await showInteractivePrompt(steps)
+  if (isInteractive) runnables = await showInteractivePrompt(runnables)
 
   await withContext(useSudo, async () => {
-    if (isDebug) await debugModeRun(steps, getExecutable)
-    else await normalModeRun(steps, getExecutable, concurrency)
+    if (isDebug) await debugModeRun(runnables, getExecutable)
+    else await normalModeRun(runnables, getExecutable, concurrency)
   })
 }

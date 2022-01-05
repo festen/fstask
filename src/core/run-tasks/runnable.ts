@@ -1,6 +1,6 @@
 import { Task } from '../task'
 
-export interface Step {
+export interface Runnable {
   name: string
   tasks: Task[]
 }
