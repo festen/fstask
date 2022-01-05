@@ -3,9 +3,9 @@ import { runTasks } from '../core'
 
 interface RunOptions {
   concurrency?: number
-  debug?: boolean
-  rollback?: boolean
-  interactive?: boolean
+  isDebug?: boolean
+  mode?: 'run' | 'rollback'
+  isInteractive?: boolean
 }
 
 export const runRegisteredTasks = async (

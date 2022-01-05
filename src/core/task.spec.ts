@@ -36,9 +36,9 @@ describe('task', () => {
         'task 2',
         'task 4',
         'task 5',
-        'task 1 [Waiting for task 2]',
-        'task 6 [Waiting for task 4 and task 5]',
-        'task 3 [Waiting for task 1 and task 6]',
+        'task 1',
+        'task 6',
+        'task 3',
       ])
     })
 

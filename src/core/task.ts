@@ -1,4 +1,3 @@
-import { commaListsAnd } from 'common-tags'
 import { CustomStreamWriter, ExecuteFn, SetOutput } from '../support'
 
 export type CreateTaskOptions<T> = Partial<
@@ -10,7 +9,7 @@ export type TaskStatus = 'open' | 'busy' | 'done'
 export class Task<T = any> {
   status: TaskStatus = 'open'
   dependencies: Task[] = []
-  _title: string
+  title: string
   result: Promise<T | undefined>
   preAuthSudo = false
 
@@ -18,17 +17,8 @@ export class Task<T = any> {
     return this.dependencies.every((task) => task.status === 'done')
   }
 
-  get title (): string {
-    const waitingFor = this.dependencies
-      .filter((d) => d.status !== 'done')
-      ?.map((d) => d._title)
-    return waitingFor.length > 0
-      ? commaListsAnd`${this._title} [Waiting for ${waitingFor}]`
-      : this._title
-  }
-
   constructor (options: CreateTaskOptions<T>) {
-    this._title = options.title
+    this.title = options.title
     this.dependencies = options.dependencies ?? this.dependencies
     this._run = options.run ?? this._run
     this._rollback = options.rollback ?? this._rollback

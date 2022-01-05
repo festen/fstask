@@ -1,5 +1,5 @@
 import { runTasks } from './run-tasks'
-import { Registry } from './registry'
+import { Registry } from '../registry'
 
 describe('execute tasks', () => {
   let registry: Registry
@@ -16,7 +16,7 @@ describe('execute tasks', () => {
 
     await runTasks([{ name: 'default', tasks: registry.getAll() }], {
       concurrency: 1,
-      debug: true,
+      isDebug: true,
     })
 
     const testTask = registry.resolve('testTask')
