@@ -3,7 +3,7 @@ import { ExecuteFn } from '../support'
 import { chalk } from 'zx'
 
 export interface RegisterTaskOptions<T> {
-  title: string
+  name: string
   run?: ExecuteFn<T>
   rollback?: ExecuteFn<void>
   dependencies?: Array<Task | string>
@@ -49,7 +49,7 @@ export class Registry {
   }
 
   resolve (task: string): Task | undefined {
-    return this.#tasks.find((t) => t.title === task)
+    return this.#tasks.find((t) => t.name === task)
   }
 
   private forwardRefCache: Record<string, { task: Task, deps: string[] }> = {}
@@ -58,8 +58,8 @@ export class Registry {
     for (const { task, deps } of Object.values(this.forwardRefCache)) {
       for (const dep of deps) {
         if (this.forwardRefCache[dep] !== undefined) {
-          this.forwardRefCache[task.title].deps = this.forwardRefCache[
-            task.title
+          this.forwardRefCache[task.name].deps = this.forwardRefCache[
+            task.name
           ].deps.filter((d) => d !== dep)
           task.dependencies.push(this.forwardRefCache[dep].task)
         }
@@ -68,10 +68,13 @@ export class Registry {
   }
 
   private updateCache (task: Task, forwardDependencies: string[]): void {
-    if (this.forwardRefCache[task.title] !== undefined) {
-      throw new Error(`Task with title ${task.title} was already registered`)
+    if (this.forwardRefCache[task.name] !== undefined) {
+      throw new Error(`Task with name ${task.name} was already registered`)
     }
-    this.forwardRefCache[task.title] = { task, deps: forwardDependencies }
+    this.forwardRefCache[task.name] = {
+      task,
+      deps: forwardDependencies,
+    }
     this.resolveDependencies()
   }
 
@@ -83,7 +86,10 @@ export class Registry {
     const filter = optionsDependencies.filter.bind(optionsDependencies)
     const stringDependencies = filter((d) => typeof d === 'string') as string[]
     const taskDependencies = filter((d) => typeof d !== 'string') as Task[]
-    const task = new Task({ ...options, dependencies: taskDependencies })
+    const task = new Task({
+      ...options,
+      dependencies: taskDependencies,
+    })
     return [task, stringDependencies]
   }
 }

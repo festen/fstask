@@ -1,6 +1,6 @@
 import { $ } from 'zx'
 import { Task } from '../task'
-import { SetOutput, withContext } from '../../support'
+import { ExecuteFn, withContext } from '../../support'
 import { showInteractivePrompt } from './show-interactive-prompt'
 import { debugModeRun } from './debug-mode-run'
 import { normalModeRun } from './normal-mode-run'
@@ -22,8 +22,6 @@ const defaultOptions: Options = {
   mode: 'run',
   useGlobalSudo: false,
 }
-
-type SetOutputFn = (setOutput: SetOutput) => Promise<void>
 
 const shouldAuth = (steps: Step[]): boolean =>
   steps.flatMap((s) => s.registry.getAll()).some((t) => t.preAuthSudo)
@@ -50,11 +48,14 @@ export const runTasks = async (
 
   let runnables = asRunnable(steps)
   const useSudo = useGlobalSudo || shouldAuth(steps)
-  const getExecutable = (t: Task): SetOutputFn => t[mode].bind(t)
+  const getExecutable = (t: Task): ExecuteFn<any> => t[mode].bind(t)
   if (isInteractive) runnables = await showInteractivePrompt(runnables)
 
   await withContext(useSudo, async () => {
-    if (isDebug) await debugModeRun(runnables, getExecutable)
-    else await normalModeRun(runnables, getExecutable, concurrency)
+    if (isDebug) {
+      await debugModeRun(runnables, getExecutable)
+    } else {
+      await normalModeRun(runnables, getExecutable, concurrency)
+    }
   })
 }

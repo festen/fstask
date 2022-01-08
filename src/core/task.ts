@@ -1,15 +1,17 @@
-import { CustomStreamWriter, ExecuteFn, SetOutput } from '../support'
+import { ExecuteFn } from '../support'
 
 export type CreateTaskOptions<T> = Partial<
 Pick<Task, 'dependencies' | 'preAuthSudo'>
-> & { title: string, run?: ExecuteFn<T>, rollback?: ExecuteFn<void> }
+> & { name: string, run?: ExecuteFn<T>, rollback?: ExecuteFn<void> }
 
 export type TaskStatus = 'open' | 'busy' | 'done'
+
+type RunArgs<T> = Parameters<ExecuteFn<T>>[0]
 
 export class Task<T = any> {
   status: TaskStatus = 'open'
   dependencies: Task[] = []
-  title: string
+  name: string
   result: Promise<T | undefined>
   preAuthSudo = false
 
@@ -18,7 +20,7 @@ export class Task<T = any> {
   }
 
   constructor (options: CreateTaskOptions<T>) {
-    this.title = options.title
+    this.name = options.name
     this.dependencies = options.dependencies ?? this.dependencies
     this._run = options.run ?? this._run
     this._rollback = options.rollback ?? this._rollback
@@ -28,11 +30,11 @@ export class Task<T = any> {
     })
   }
 
-  async run (setOutput: SetOutput): Promise<T | undefined> {
+  async run (args: RunArgs<T>): Promise<T | undefined> {
     this.status = 'busy'
     let res: T | undefined
     try {
-      res = await this._run(setOutput, () => new CustomStreamWriter(setOutput))
+      res = await this._run(args)
       this.resolveResult(res)
     } catch (e) {
       this.rejectResult(e)
@@ -42,9 +44,9 @@ export class Task<T = any> {
     return res
   }
 
-  async rollback (setOutput: SetOutput): Promise<void> {
+  async rollback (args: RunArgs<T>): Promise<void> {
     this.status = 'busy'
-    await this._rollback(setOutput, () => new CustomStreamWriter(setOutput))
+    await this._rollback(args)
     this.status = 'done'
   }
 

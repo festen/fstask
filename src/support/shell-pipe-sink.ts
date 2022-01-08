@@ -1,7 +1,7 @@
 import { Writable } from 'stream'
-import { sleep } from 'zx'
+import { ProcessOutput, sleep } from 'zx'
 
-export class CustomStreamWriter extends Writable {
+export class ShellPipeSink extends Writable {
   chunk: string = ''
 
   constructor (private readonly sink: (text: string) => void) {
@@ -9,7 +9,7 @@ export class CustomStreamWriter extends Writable {
   }
 
   async _write (
-    chunk: Buffer,
+    chunk: Buffer | ProcessOutput,
     encoding: BufferEncoding,
     callback: (error?: Error | null) => void,
   ): Promise<void> {

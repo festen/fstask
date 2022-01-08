@@ -10,7 +10,7 @@ describe('execute tasks', () => {
 
   test('it should store result of executed tasks', async () => {
     registry.register({
-      title: 'testTask',
+      name: 'testTask',
       run: async (): Promise<string> => 'TEST_RESULT',
     })
 

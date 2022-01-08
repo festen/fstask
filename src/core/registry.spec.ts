@@ -17,7 +17,7 @@ describe('Registry', () => {
   })
 
   test('it should display added task', () => {
-    const mockTask = new Task({ title: 'MockTask' })
+    const mockTask = new Task({ name: 'MockTask' })
 
     registry.register(mockTask)
 
@@ -26,9 +26,9 @@ describe('Registry', () => {
 
   test('it should handle multiple added tasks', () => {
     const mockTasks = [
-      new Task({ title: 'Mock Task 1' }),
-      new Task({ title: 'Mock Task 2' }),
-      new Task({ title: 'Mock Task 3' }),
+      new Task({ name: 'Mock Task 1' }),
+      new Task({ name: 'Mock Task 2' }),
+      new Task({ name: 'Mock Task 3' }),
     ]
 
     mockTasks.forEach(registry.register.bind(registry))
@@ -38,9 +38,9 @@ describe('Registry', () => {
 
   test('it should clear all tasks', () => {
     const mockTasks = [
-      new Task({ title: 'Mock Task 1' }),
-      new Task({ title: 'Mock Task 2' }),
-      new Task({ title: 'Mock Task 3' }),
+      new Task({ name: 'Mock Task 1' }),
+      new Task({ name: 'Mock Task 2' }),
+      new Task({ name: 'Mock Task 3' }),
     ]
 
     mockTasks.forEach(registry.register.bind(registry))
