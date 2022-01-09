@@ -6,7 +6,8 @@ export interface RegisterTaskOptions<T> {
   name: string
   run?: ExecuteFn<T>
   rollback?: ExecuteFn<void>
-  dependencies?: Array<Task | string>
+  using?: Array<Task | string>
+  sudo?: string | boolean
 }
 
 export class Registry {
@@ -62,7 +63,7 @@ export class Registry {
           this.forwardRefCache[task.name].deps = this.forwardRefCache[
             task.name
           ].deps.filter((d) => d !== dep)
-          task.dependencies.push(this.forwardRefCache[dep].task)
+          task.using.push(this.forwardRefCache[dep].task)
         }
       }
     }
@@ -83,13 +84,13 @@ export class Registry {
     options: RegisterTaskOptions<T> | Task,
   ): [Task, string[]] {
     if (options instanceof Task) return [options, []]
-    const optionsDependencies = options.dependencies ?? []
+    const optionsDependencies = options.using ?? []
     const filter = optionsDependencies.filter.bind(optionsDependencies)
     const stringDependencies = filter((d) => typeof d === 'string') as string[]
     const taskDependencies = filter((d) => typeof d !== 'string') as Task[]
     const task = new Task({
       ...options,
-      dependencies: taskDependencies,
+      using: taskDependencies,
     })
     return [task, stringDependencies]
   }

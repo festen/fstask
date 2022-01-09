@@ -15,7 +15,7 @@ const withRelated = (selectedTasks: Task[]): Task[] => {
   while (!stable) {
     if (maxDepth-- < 0) throw new Error('Max depth reached')
     const newDependencies = relatedTask
-      .flatMap((t) => t.dependencies)
+      .flatMap((t) => t.using)
       .filter((d) => !relatedTask.includes(d))
     if (newDependencies.length === 0) stable = true
     relatedTask.push(...newDependencies)

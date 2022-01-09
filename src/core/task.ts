@@ -1,8 +1,12 @@
 import { ExecuteFn } from '../support'
 
-export type CreateTaskOptions<T> = Partial<
-Pick<Task, 'dependencies' | 'preAuthSudo'>
-> & { name: string, run?: ExecuteFn<T>, rollback?: ExecuteFn<void> }
+export interface CreateTaskOptions<T> {
+  using?: Task[]
+  name: string
+  run?: ExecuteFn<T>
+  rollback?: ExecuteFn<void>
+  sudo?: string | boolean
+}
 
 export type TaskStatus = 'open' | 'busy' | 'done'
 
@@ -10,20 +14,21 @@ type RunArgs<T> = Parameters<ExecuteFn<T>>[0]
 
 export class Task<T = any> {
   status: TaskStatus = 'open'
-  dependencies: Task[] = []
+  using: Task[] = []
   name: string
   result: Promise<T | undefined>
-  preAuthSudo = false
+  sudo: string | boolean = false
 
   get hasNoDependencies (): boolean {
-    return this.dependencies.every((task) => task.status === 'done')
+    return this.using.every((task) => task.status === 'done')
   }
 
   constructor (options: CreateTaskOptions<T>) {
     this.name = options.name
-    this.dependencies = options.dependencies ?? this.dependencies
+    this.using = options.using ?? this.using
     this._run = options.run ?? this._run
     this._rollback = options.rollback ?? this._rollback
+    this.sudo = options.sudo ?? this.sudo
     this.result = new Promise<T | undefined>((resolve, reject) => {
       this.resolveResult = resolve
       this.rejectResult = reject
@@ -56,7 +61,7 @@ export class Task<T = any> {
     while (open.length > 0 && maxDepth-- > 0) {
       // find all tasks that have no unmet dependencies
       const candidates = open.filter((t) =>
-        t.dependencies.every((dep) => sorted.includes(dep)),
+        t.using.every((dep) => sorted.includes(dep)),
       )
       open = open.filter((t) => !candidates.includes(t))
       sorted.push(...candidates)

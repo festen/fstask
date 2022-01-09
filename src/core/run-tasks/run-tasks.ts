@@ -23,8 +23,8 @@ const defaultOptions: Options = {
   useGlobalSudo: false,
 }
 
-const shouldAuth = (steps: Step[]): boolean =>
-  steps.flatMap((s) => s.registry.getAll()).some((t) => t.preAuthSudo)
+const getAuthCommands = (steps: Step[]): Array<boolean | string> =>
+  steps.flatMap((s) => s.registry.getAll()).map((t) => t.sudo)
 
 const asRunnable = (steps: Step[]): Runnable[] =>
   steps.map((step) => ({
@@ -47,11 +47,11 @@ export const runTasks = async (
   $.verbose = isDebug
 
   let runnables = asRunnable(steps)
-  const useSudo = useGlobalSudo || shouldAuth(steps)
+  const sudoCommands = [useGlobalSudo, ...getAuthCommands(steps)]
   const getExecutable = (t: Task): ExecuteFn<any> => t[mode].bind(t)
   if (isInteractive) runnables = await showInteractivePrompt(runnables)
 
-  await withContext(useSudo, async () => {
+  await withContext(sudoCommands, async () => {
     if (isDebug) {
       await debugModeRun(runnables, getExecutable)
     } else {
