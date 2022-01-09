@@ -37,10 +37,11 @@ export class Registry {
     return Task.sort(this.#tasks)
   }
 
-  register = <T>(optionsOrTask: RegisterTaskOptions<T> | Task<T>): void => {
+  register = <T>(optionsOrTask: RegisterTaskOptions<T> | Task<T>): Task => {
     const [task, deps] = Registry.ensureTask(optionsOrTask)
     this.updateCache(task, deps)
     this.#tasks.push(task)
+    return task
   }
 
   clear (): void {
