@@ -32,17 +32,17 @@ describe('task', () => {
       const t2 = new Task({ name: 'task 2' })
       const t1 = new Task({
         name: 'task 1',
-        using: [t2],
+        uses: [t2],
       })
       const t4 = new Task({ name: 'task 4' })
       const t5 = new Task({ name: 'task 5' })
       const t6 = new Task({
         name: 'task 6',
-        using: [t4, t5],
+        uses: [t4, t5],
       })
       const t3 = new Task({
         name: 'task 3',
-        using: [t1, t6],
+        uses: [t1, t6],
       })
 
       const sorted = Task.sort([t1, t2, t3, t4, t5, t6])
@@ -60,8 +60,8 @@ describe('task', () => {
 
     test('it throws when adding circular depended tasks', () => {
       const tasks = [new Task({ name: 'task 1' }), new Task({ name: 'task 2' })]
-      tasks[0].using = [tasks[1]]
-      tasks[1].using = [tasks[0]]
+      tasks[0].uses = [tasks[1]]
+      tasks[1].uses = [tasks[0]]
 
       const sortTasks = (): Task[] => Task.sort(tasks)
 

@@ -1,12 +1,12 @@
 import { sleep } from 'zx'
 import tasuku from 'tasuku'
 import { Task } from '../task'
-import { ExecuteFn } from '../../support'
+import { ExecuteFunction } from '../../support'
 import { Runnable } from './runnable'
 
 export async function normalModeRun (
   runnables: Runnable[],
-  getExecutable: (task: Task) => ExecuteFn<void>,
+  getExecutable: <T> (task: Task<T>) => ExecuteFunction<T, void>,
   concurrency: number,
 ): Promise<void> {
   for (const runnable of runnables) {

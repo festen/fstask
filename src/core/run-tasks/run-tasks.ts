@@ -1,6 +1,6 @@
 import { $ } from 'zx'
 import { Task } from '../task'
-import { ExecuteFn, withContext } from '../../support'
+import { ExecuteFunction, withContext } from '../../support'
 import { showInteractivePrompt } from './show-interactive-prompt'
 import { debugModeRun } from './debug-mode-run'
 import { normalModeRun } from './normal-mode-run'
@@ -48,7 +48,7 @@ export const runTasks = async (
 
   let runnables = asRunnable(steps)
   const sudoCommands = [useGlobalSudo, ...getAuthCommands(steps)]
-  const getExecutable = (t: Task): ExecuteFn<any> => t[mode].bind(t)
+  const getExecutable = <T> (t: Task<T>): ExecuteFunction<T, any> => t[mode].bind(t)
   if (isInteractive) runnables = await showInteractivePrompt(runnables)
 
   await withContext(sudoCommands, async () => {

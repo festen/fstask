@@ -1,11 +1,11 @@
 import { chalk } from 'zx'
 import { Task } from '../task'
-import { ExecuteFn } from '../../support'
+import { ExecuteFunction } from '../../support'
 import { Runnable } from './runnable'
 
 export async function debugModeRun (
   runnables: Runnable[],
-  getExecutable: (t: Task) => ExecuteFn<void>,
+  getExecutable: <T> (t: Task<T>) => ExecuteFunction<T, void>,
 ): Promise<void> {
   for (const runnable of runnables) {
     if (runnables.length > 1) {

@@ -1,12 +1,12 @@
 import { Task } from './task'
-import { ExecuteFn } from '../support'
+import { ExecuteFunction } from '../support'
 import { chalk } from 'zx'
 
 export interface RegisterTaskOptions<T> {
   name: string
-  run?: ExecuteFn<T>
-  rollback?: ExecuteFn<void>
-  using?: Array<Task | string>
+  run?: ExecuteFunction<T, T | undefined>
+  rollback?: ExecuteFunction<T, void>
+  uses?: Array<Task | string>
   sudo?: string | boolean
 }
 
@@ -63,7 +63,7 @@ export class Registry {
           this.forwardRefCache[task.name].deps = this.forwardRefCache[
             task.name
           ].deps.filter((d) => d !== dep)
-          task.using.push(this.forwardRefCache[dep].task)
+          task.uses.push(this.forwardRefCache[dep].task)
         }
       }
     }
@@ -81,16 +81,16 @@ export class Registry {
   }
 
   private static ensureTask<T>(
-    options: RegisterTaskOptions<T> | Task,
-  ): [Task, string[]] {
+    options: RegisterTaskOptions<T> | Task<T>,
+  ): [Task<T>, string[]] {
     if (options instanceof Task) return [options, []]
-    const optionsDependencies = options.using ?? []
+    const optionsDependencies = options.uses ?? []
     const filter = optionsDependencies.filter.bind(optionsDependencies)
     const stringDependencies = filter((d) => typeof d === 'string') as string[]
-    const taskDependencies = filter((d) => typeof d !== 'string') as Task[]
-    const task = new Task({
+    const taskDependencies = filter((d) => typeof d !== 'string') as Array<Task<T>>
+    const task = new Task<T>({
       ...options,
-      using: taskDependencies,
+      uses: taskDependencies,
     })
     return [task, stringDependencies]
   }

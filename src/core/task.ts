@@ -1,31 +1,29 @@
-import { ExecuteFn } from '../support'
+import { ExecuteFunction, ExecuteFunctionArguments } from '../support'
 
 export interface CreateTaskOptions<T> {
-  using?: Task[]
+  uses?: Task[]
   name: string
-  run?: ExecuteFn<T>
-  rollback?: ExecuteFn<void>
+  run?: ExecuteFunction<T, T | undefined>
+  rollback?: ExecuteFunction<T, void>
   sudo?: string | boolean
 }
 
 export type TaskStatus = 'open' | 'busy' | 'done'
 
-type RunArgs<T> = Parameters<ExecuteFn<T>>[0]
-
 export class Task<T = any> {
   status: TaskStatus = 'open'
-  using: Task[] = []
+  uses: Task[] = []
   name: string
   result: Promise<T | undefined>
   sudo: string | boolean = false
 
   get hasNoDependencies (): boolean {
-    return this.using.every((task) => task.status === 'done')
+    return this.uses.every((task) => task.status === 'done')
   }
 
   constructor (options: CreateTaskOptions<T>) {
     this.name = options.name
-    this.using = options.using ?? this.using
+    this.uses = options.uses ?? this.uses
     this._run = options.run ?? this._run
     this._rollback = options.rollback ?? this._rollback
     this.sudo = options.sudo ?? this.sudo
@@ -35,7 +33,7 @@ export class Task<T = any> {
     })
   }
 
-  async run (args: RunArgs<T>): Promise<T | undefined> {
+  async run (args: ExecuteFunctionArguments<T>): Promise<T | undefined> {
     this.status = 'busy'
     let res: T | undefined
     try {
@@ -49,7 +47,7 @@ export class Task<T = any> {
     return res
   }
 
-  async rollback (args: RunArgs<T>): Promise<void> {
+  async rollback (args: ExecuteFunctionArguments<T>): Promise<void> {
     this.status = 'busy'
     await this._rollback(args)
     this.status = 'done'
@@ -61,7 +59,7 @@ export class Task<T = any> {
     while (open.length > 0 && maxDepth-- > 0) {
       // find all tasks that have no unmet dependencies
       const candidates = open.filter((t) =>
-        t.using.every((dep) => sorted.includes(dep)),
+        t.uses.every((dep) => sorted.includes(dep)),
       )
       open = open.filter((t) => !candidates.includes(t))
       sorted.push(...candidates)
@@ -72,6 +70,6 @@ export class Task<T = any> {
 
   private resolveResult!: (value: T | undefined) => void
   private rejectResult!: (reason?: any) => void
-  private readonly _run: ExecuteFn<T | undefined> = async () => undefined
-  private readonly _rollback: ExecuteFn<void> = async () => {}
+  private readonly _run: ExecuteFunction<T, T | undefined> = async () => undefined
+  private readonly _rollback: ExecuteFunction<T, void> = async () => {}
 }
