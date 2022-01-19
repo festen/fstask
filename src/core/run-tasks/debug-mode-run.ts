@@ -17,11 +17,11 @@ export async function debugModeRun (
       process.stdout.write(chalk.bold(task.name) + '\n')
       await getExecutable(task)({
         caller: task,
-        setOutput: process.stdout.write,
-        setTitle: process.stdout.write,
-        setStatus: process.stdout.write,
-        setWarning: process.stderr.write,
-        setError: process.stderr.write,
+        setOutput: (txt: string) => process.stdout.write(txt + '\n'),
+        setTitle: (txt: string) => process.stdout.write(txt + '\n'),
+        setStatus: (txt: string) => process.stdout.write(txt + '\n'),
+        setWarning: (txt: string) => process.stderr.write(txt + '\n'),
+        setError: (txt: string) => process.stderr.write(txt + '\n'),
       })
     }
   }

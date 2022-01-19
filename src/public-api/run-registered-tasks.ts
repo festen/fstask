@@ -10,7 +10,7 @@ interface RunOptions {
 
 export const runRegisteredTasks = async (
   options: RunOptions = {},
-): Promise<void> =>
+): Promise<any> =>
   await runTasks(defaultRegistry.getAllSteps(), {
     concurrency: options.concurrency,
     isDebug: options.debug,

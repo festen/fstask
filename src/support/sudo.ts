@@ -1,33 +1,36 @@
-/* eslint-disable @typescript-eslint/promise-function-async */
-import { $, ProcessOutput, ProcessPromise } from 'zx'
-import { wrapCommand } from './wrap-command'
+import { ProcessOutput, ProcessPromise, chalk } from 'zx'
+import { executeRaw } from './raw-command'
 
-const $loop = wrapCommand('while true; do ', '; sleep 6000; done')
+const displayMessage = (numSudoCommands: number): void => {
+  if (numSudoCommands === 0) return
+  console.log()
+  console.log(chalk.blue('Some scripts need sudo access, your password will be requested upfront.'))
+  console.log(chalk.blue(`You are now prompted to answer your sudo password${numSudoCommands > 1 ? ` up to ${numSudoCommands} times` : ''}.`))
+  if (numSudoCommands > 1) {
+    console.log(chalk.blue('This is dependent on which shell sudo is asked for, which might not all be the same.'))
+  }
+}
 
-const defaultSudoCommand = 'sudo -v'
+const wrapShell = (shells: Array<string | boolean>, command: string): string[] =>
+  shells
+    .filter(shell => shell !== false)
+    .map(shell => shell === true ? command : `${shell as string} "${command}"`)
 
 export async function withContext<T> (
   sudo: Array<boolean | string>,
   fn: () => Promise<T>,
 ): Promise<T> {
   const children: Array<ProcessPromise<ProcessOutput>> = []
-  const sudoCommands = sudo
-    .filter((s) => s !== false)
-    .map((s) => (s === true ? defaultSudoCommand : s)) as string[]
-  if (sudoCommands.length > 0) {
-    console.log(
-      'Some scripts eed sudo access, your password will be requested upfront.',
-    )
-    console.log('You might be prompted to answer your sudo password twice.')
-    console.log(
-      'This is because homebrew requires a bash shell, which might not be your current shell.',
-    )
-    await Promise.all(sudoCommands.map((cmd) => $`${cmd}`))
-    children.push(...sudoCommands.map((cmd) => $loop`${cmd}`))
-  }
+  const askPasswords = wrapShell(sudo, 'sudo -v')
+  const loopPasswords = wrapShell(sudo, 'while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null')
+  displayMessage(askPasswords.length)
+  await Promise.all(askPasswords.map(executeRaw))
+  children.push(...loopPasswords.map(executeRaw))
+  console.log()
+
   try {
     return await fn()
   } finally {
-    await Promise.allSettled(children.map((child) => child?.kill(9)))
+    await Promise.allSettled(children.map(async (child) => await child?.kill(9)))
   }
 }

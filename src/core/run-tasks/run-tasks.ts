@@ -35,7 +35,7 @@ const asRunnable = (steps: Step[]): Runnable[] =>
 export const runTasks = async (
   steps: Step[],
   options: Partial<Options>,
-): Promise<void> => {
+): Promise<any> => {
   const { isDebug, isInteractive, useGlobalSudo, mode, concurrency } = {
     ...defaultOptions,
     ...Object.fromEntries(
@@ -47,9 +47,9 @@ export const runTasks = async (
   $.verbose = isDebug
 
   let runnables = asRunnable(steps)
-  const sudoCommands = [useGlobalSudo, ...getAuthCommands(steps)]
   const getExecutable = <T> (t: Task<T>): ExecuteFunction<T, any> => t[mode].bind(t)
   if (isInteractive) runnables = await showInteractivePrompt(runnables)
+  const sudoCommands = [useGlobalSudo, ...getAuthCommands(steps.filter(s => runnables.find(r => r.name === s.name)))]
 
   await withContext(sudoCommands, async () => {
     if (isDebug) {

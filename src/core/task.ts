@@ -40,7 +40,8 @@ export class Task<T = any> {
       res = await this._run(args)
       this.resolveResult(res)
     } catch (e) {
-      this.rejectResult(e)
+      this.resolveResult(undefined)
+      throw e
     } finally {
       this.status = 'done'
     }

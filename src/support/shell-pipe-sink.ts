@@ -1,5 +1,5 @@
 import { Writable } from 'stream'
-import { ProcessOutput, sleep } from 'zx'
+import { ProcessOutput } from 'zx'
 
 export class ShellPipeSink extends Writable {
   chunk: string = ''
@@ -14,13 +14,11 @@ export class ShellPipeSink extends Writable {
     callback: (error?: Error | null) => void,
   ): Promise<void> {
     this.chunk += chunk.toString()
-    while (this.chunk.includes('\n')) {
+    let maxLines = 100
+    while (this.chunk.includes('\n') || maxLines-- < 0) {
       const [toWrite, ...rest] = this.chunk.split(/\n/)
       this.chunk = rest.join('\n')
-      if (toWrite.trim().length > 0) {
-        await sleep(10)
-        this.sink(toWrite)
-      }
+      if (toWrite.trim().length > 0) this.sink(toWrite)
     }
     callback()
   }

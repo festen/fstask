@@ -10,37 +10,47 @@ export async function normalModeRun (
   concurrency: number,
 ): Promise<void> {
   for (const runnable of runnables) {
-    await tasuku.group(
-      (createTasks: any) =>
-        runnable.tasks.map((task) => {
-          return createTasks(
-            task.name,
-            async ({
-              setTitle,
-              setOutput,
-              setError,
-              setStatus,
-              setWarning,
-            }: any) => {
-              while (!task.hasNoDependencies) {
-                setTitle(task.name)
-                await sleep(1000)
-              }
-              setTitle(task.name)
-              await getExecutable(task)({
-                setOutput,
+    try {
+      await tasuku.group(
+        (createTasks: any) =>
+          runnable.tasks.map((task) => {
+            return createTasks(
+              task.name,
+              async ({
                 setTitle,
+                setOutput,
                 setError,
                 setStatus,
                 setWarning,
-                caller: task,
-              })
-              await sleep(300)
-              setOutput('')
-            },
-          )
-        }),
-      { concurrency },
-    )
+              }: any) => {
+                while (!task.hasNoDependencies) {
+                  setTitle(task.name)
+                  await sleep(1000)
+                }
+                setTitle(task.name)
+                try {
+                  await getExecutable(task)({
+                    setOutput,
+                    setTitle,
+                    setError,
+                    setStatus,
+                    setWarning,
+                    caller: task,
+                  })
+                  setOutput('')
+                } catch (e: any) {
+                  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                  setError(e.stdout || e.stderr || e || '')
+                } finally {
+                  await sleep(300)
+                }
+              },
+            )
+          }),
+        { concurrency },
+      )
+    } catch (e) {
+      console.error('global catch', e)
+    }
   }
 }
